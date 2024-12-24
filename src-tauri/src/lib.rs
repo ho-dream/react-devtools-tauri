@@ -1,5 +1,5 @@
 use tauri::Manager;
-
+mod websocket_server;
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -14,6 +14,10 @@ pub fn run() {
             {
                 let window = app.get_webview_window("main").unwrap();
                 window.open_devtools();
+                // 启动 WebSocket 服务器
+                tauri::async_runtime::spawn(async {
+                    websocket_server::start_websocket_server().await;
+                });
                 window.close_devtools();
             }
             Ok(())

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import reactLogo from "./assets/react.svg";
 import ViteLogo from './assets/vite.svg';
 import TauriLogo from './assets/tauri.svg';
@@ -8,11 +8,44 @@ import "./App.css";
 function App() {
   const [greetMsg, setGreetMsg] = useState("");
   const [name, setName] = useState("");
+  const [wsMessage, setWsMessage] = useState("");
 
   async function greet() {
     // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
     setGreetMsg(await invoke("greet", { name }));
   }
+
+  useEffect(() => {
+    // 创建 WebSocket 连接
+    const socket = new WebSocket('ws://127.0.0.1:3000/ws');
+
+    // 监听连接打开事件
+    socket.addEventListener('open', (_event) => {
+      console.log('WebSocket 连接已打开');
+      socket.send('Hello Server!');
+    });
+
+    // 监听消息事件
+    socket.addEventListener('message', (event) => {
+      console.log('收到消息:', event.data);
+      setWsMessage(event.data);
+    });
+
+    // 监听连接关闭事件
+    socket.addEventListener('close', (_event) => {
+      console.log('WebSocket 连接已关闭');
+    });
+
+    // 监听错误事件
+    socket.addEventListener('error', (event) => {
+      console.error('WebSocket 发生错误:', event);
+    });
+
+    // 组件卸载时关闭 WebSocket 连接
+    return () => {
+      socket.close();
+    };
+  }, []);
 
   return (
     <main className="container">
@@ -46,6 +79,7 @@ function App() {
         <button type="submit">Greet</button>
       </form>
       <p>{greetMsg}</p>
+      <p>WebSocket 消息: {wsMessage}</p>
     </main>
   );
 }
